@@ -188,7 +188,15 @@ body > #info-fulldetails-popup p {
     text-align: center;
 
     height: 75px !important;
-    font-size: 24px !important;
 
+    font-size: 24px !important;
+    font-family: "Open Sans","open-sans",Arial,"Helvetica Neue",sans-serif !important;
+
+    line-height: 1.1 !important;
+    margin-bottom: 15px;
+}
+
+body > #info-fulldetails-popup br {
+    font-family: "Open Sans","open-sans",Arial,"Helvetica Neue",sans-serif !important;
     line-height: 1.1 !important;
 }

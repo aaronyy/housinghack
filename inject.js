@@ -3,6 +3,59 @@
 // without reloading.
 var injected = injected || (function(){
 
+  // lots of variables 
+  var currentData = "Ruby";
+  var personalData = {};
+
+// ========================================================== 
+// Google API 
+  var google_api_key = "AIzaSyASQejib-5K5L6tzpiwNZSuntotZOCkWus";
+
+  var googleApiRequest = function(origin, dist, callback) {
+    var xmlhttp = new XMLHttpRequest();
+
+    requestStr = "https://maps.googleapis.com/maps/api/distancematrix/json?";
+    requestStr += "origins="+origin;
+    requestStr += "&destinations="+dist;
+    requestStr += "&mode=transit";
+    requestStr += "&key="+google_api_key;
+
+    xmlhttp.open("GET", requestStr, true);
+    xmlhttp.onreadystatechange = function() {
+      if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+          var apiData = JSON.parse(xmlhttp.responseText);
+          //console.log(xmlhttp.responseText);
+          callback(apiData);
+      }
+    }
+    xmlhttp.send();
+  }
+
+// ========================================================== 
+// local API data for current location 
+  
+  var currentLocationAddress = "";
+
+  var googleApiDataObject = null;
+  var timeToWork = "";
+  var timeToWorkSeconds = 0;
+
+  var checkUpdateLocation = function(newLocationAddress) {
+    if (newLocationAddress == currentLocationAddress)
+      return; 
+    currentLocationAddress = newLocationAddress;
+
+    var originAddr = personalData[currentData].workaddress[0]+", "+personalData[currentData].workaddress[1];
+    googleApiRequest(originAddr, currentLocationAddress, function(dataObj){ 
+      googleApiDataObject = dataObj; 
+      timeToWork = googleApiDataObject.rows[0].elements[0].duration.text;
+      timeToWorkSeconds = googleApiDataObject.rows[0].elements[0].duration.value;
+    });
+  }
+
+// ========================================================== 
+// details popup 
+
   var fulldetails_div = document.createElement("div");
   fulldetails_div.className = "info-fulldetails-popup";
   fulldetails_div.id = "info-fulldetails-popup";
@@ -74,6 +127,8 @@ var injected = injected || (function(){
         if(popupDiv) {
           if(!popupDiv.classList.contains("show")) {
             popupDiv.classList.add("show");
+
+            checkUpdateLocation("Seattle, WA");
           }
         }
 
@@ -153,8 +208,6 @@ var injected = injected || (function(){
     return true;
   });
 
-  var currentData = "Ruby";
-  var personalData = {};
   personalData["Ruby"] = {};
   personalData["Ruby"].firstname = "Ruby";
   personalData["Ruby"].profession = "Mom";
@@ -175,7 +228,7 @@ var injected = injected || (function(){
   photo_div_img.src = personalData[currentData].photo;
 
   window.onkeydown = function(e) {
-    if (e.keyCode == 32)
+    if (e.keyCode == 77)
     {
       if(fulldetails_div.classList.contains("show")) {
         fulldetails_div.classList.remove("show");
@@ -185,7 +238,7 @@ var injected = injected || (function(){
       }
     }
 
-    if (e.keyCode == 37)
+    if (e.keyCode == 78)
     {
       if(currentData == "Ruby")
         currentData = "Oliver";
