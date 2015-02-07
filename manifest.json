@@ -1,0 +1,18 @@
+{
+    "name": "BrowserExtension",
+    "version": "0.0.1",
+    "manifest_version": 2,
+    "description" : "Housing Hack",
+    "icons": { "16": "icons/16x16.png", "48": "icons/48x48.png", "128": "icons/128x128.png" },
+
+    "browser_action": {
+        "default_icon": "icons/19x19.png",
+        "default_title": "That's the tool tip"
+    },
+    "background": {
+        "scripts": ["background.js"],
+        "persistent": false
+    },
+
+    "permissions": ["<all_urls>"]
+}
