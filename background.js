@@ -9,14 +9,15 @@ function injectedMethod (tab, method, callback) {
 // Get background-color values from the current tab
 // and open them in Colorpeek.
 function getBgColors (tab) {
-  injectedMethod(tab, 'getBgColors', function (response) {
+  injectedMethod(tab, 'testInject', function (response) {
     var colors = response.data;
+    /*
     if (colors && colors.length) {
-      var url = 'http://colorpeek.com/#' + colors.join(',');
-      chrome.tabs.create({ url: url });
+      //var url = 'http://colorpeek.com/#' + colors.join(',');
+      //chrome.tabs.create({ url: url });
     } else {
       alert('No background colors were found! :(');
-    }
+    }*/
     return true;
   })
 }

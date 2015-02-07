@@ -14,5 +14,16 @@
         "persistent": false
     },
 
+    "content_scripts": [
+        {
+            "matches": ["http://*/*"], 
+            "css": ["test.css"] 
+        }
+    ],
+
+    "permissions": [
+      "storage"
+    ],
+
     "permissions": ["<all_urls>"]
 }
