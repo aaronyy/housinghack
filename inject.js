@@ -7,14 +7,37 @@ var injected = injected || (function(){
   var currentData = "Ruby";
   var personalData = {};
 
+// ==========================================================
+// XML parser 
+
+var parseXml;
+
+if (typeof window.DOMParser != "undefined") {
+    parseXml = function(xmlStr) {
+        return ( new window.DOMParser() ).parseFromString(xmlStr, "text/xml");
+    };
+} else if (typeof window.ActiveXObject != "undefined" &&
+       new window.ActiveXObject("Microsoft.XMLDOM")) {
+    parseXml = function(xmlStr) {
+        var xmlDoc = new window.ActiveXObject("Microsoft.XMLDOM");
+        xmlDoc.async = "false";
+        xmlDoc.loadXML(xmlStr);
+        return xmlDoc;
+    };
+} else {
+    throw new Error("No XML parser found");
+}
+
 // ========================================================== 
 // Google API 
   var google_api_key = "AIzaSyASQejib-5K5L6tzpiwNZSuntotZOCkWus";
+  var zillow_api_key = "X1-ZWz1az0cc5ybrf_8jmj2";
+  var greatschools_api_key = "ubxujm3l2auftgaeysnblgxx";
 
   var googleApiRequest = function(origin, dist, callback) {
     var xmlhttp = new XMLHttpRequest();
 
-    requestStr = "https://maps.googleapis.com/maps/api/distancematrix/json?";
+    var requestStr = "https://maps.googleapis.com/maps/api/distancematrix/json?";
     requestStr += "origins="+origin;
     requestStr += "&destinations="+dist;
     requestStr += "&mode=transit";
@@ -31,6 +54,46 @@ var injected = injected || (function(){
     xmlhttp.send();
   }
 
+  var zillowApiRequest = function(streetAddr, cityStateAddr, callback) {
+    var xmlhttp = new XMLHttpRequest();
+
+    var requestStr = "http://www.zillow.com/webservice/GetSearchResults.htm?";
+    requestStr += "zws-id="+zillow_api_key;
+    requestStr += "&address="+streetAddr;
+    requestStr += "&citystatezip="+cityStateAddr; 
+    requestStr += "&rentzestimate=true";
+
+    xmlhttp.open("GET", requestStr, true);
+    xmlhttp.onreadystatechange = function() {
+      if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+          var apiData = parseXml(xmlhttp.responseText).documentElement;
+          callback(apiData);
+      }
+    }
+    xmlhttp.send();
+  }
+
+  // http://api.greatschools.org/schools/nearby?key=[yourAPIKey]&address=160+Spear+St&city=San+Francisco&state=CA&zip=94105&schoolType=public-charter&levelCode=elementary-schools&minimumSchools=50&radius=10&limit=100
+  var greatschoolsApiRequest = function(streetAddr, city, state) {
+    var xmlhttp = new XMLHttpRequest();
+
+    var requestStr = "http://api.greatschools.org/schools/nearby?";
+    requestStr += "key="+greatschools_api_key;
+    requestStr += "&address="+streetAddr;
+    requestStr += "&city="+city;
+    requestStr += "&state="+state; 
+    requestStr += "&schoolType=public-charter&levelCode=elementary-schools&minimumSchools=1&radius=5&limit=5";
+
+    xmlhttp.open("GET", requestStr, true);
+    xmlhttp.onreadystatechange = function() {
+      if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+          var apiData = parseXml(xmlhttp.responseText).documentElement;
+          console.log(apiData);
+          callback(apiData);
+      }
+    }
+    xmlhttp.send();
+  }
 // ========================================================== 
 // local API data for current location 
   
@@ -40,17 +103,27 @@ var injected = injected || (function(){
   var timeToWork = "";
   var timeToWorkSeconds = 0;
 
+  var zillowDataObject = null; 
+  var zillowRentEstimate = 0;
+
   var checkUpdateLocation = function(newLocationAddress) {
     if (newLocationAddress == currentLocationAddress)
       return; 
     currentLocationAddress = newLocationAddress;
-
+/*
     var originAddr = personalData[currentData].workaddress[0]+", "+personalData[currentData].workaddress[1];
     googleApiRequest(originAddr, currentLocationAddress, function(dataObj){ 
       googleApiDataObject = dataObj; 
       timeToWork = googleApiDataObject.rows[0].elements[0].duration.text;
       timeToWorkSeconds = googleApiDataObject.rows[0].elements[0].duration.value;
     });
+
+    zillowApiRequest(personalData[currentData].workaddress[0], personalData[currentData].workaddress[1], function(dataObj){
+      zillowDataObject = dataObj;
+      rentZestimate = parseInt(zillowDataObject.getElementsByTagName("rentzestimate")[0].getElementsByTagName("amount")[0].innerHTML);
+    });
+*/
+    // update UI/UX accordingly 
   }
 
 // ========================================================== 
