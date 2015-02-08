@@ -4,9 +4,9 @@ This application was developed on February 8th, 2015 for the Hack Housing Hackat
 
 ![Yay](screenshot.png)
 
-You can also check out [this demo screencast](https://www.youtube.com/watch?v=dQw4w9WgXcQ) of our application on YouTube.
+You can also check out [this demo screencast](http://youtu.be/HXT0EpsBtgc) of our application on YouTube.
 
-## Challenge and Approach
+## Challenge and Approach 
 
 Our submission is to give access to personalized information (work travel, budget costs, area schools, hospitals, groceries, and safety) across all website domains: everywhere from Zillow and Craigslist to public housing directories and even the HUD API webpages. 
 
