@@ -2,7 +2,7 @@
 
 This application was developed on February 8th, 2015 for the Hack Housing Hackathon.
 
-![Isn't our app beautiful?!](screenshot.jpg)
+![Yay](screenshot.png)
 
 You can also check out [this demo screencast](https://www.youtube.com/watch?v=dQw4w9WgXcQ) of our application on YouTube.
 
