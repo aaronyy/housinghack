@@ -596,7 +596,7 @@ if (typeof window.DOMParser != "undefined") {
         if (e.target) target = e.target;
         else if (e.srcElement) target = e.srcElement;
 
-        //console.log(target.classList);
+        console.log(target.classList);
 
         var popupDiv = document.getElementById("info-popup");
         if(popupDiv) {
@@ -658,6 +658,36 @@ if (typeof window.DOMParser != "undefined") {
                 }
               }
 
+              if (actualPrice)
+                checkUpdateLocation(addressStr, cityStr, stateStr, zipcodeStr, actualPrice); // TODO use real locations 
+              else 
+                checkUpdateLocation(addressStr, cityStr, stateStr, zipcodeStr, 1300.0);
+            }
+
+            if(target.classList.contains("mapaddress")) {
+              var node = target;
+              addressStr = node.innerHTML.substring(0, node.innerHTML.indexOf(','));
+              addressStr = addressStr.split(' ').join('+');
+              addressStr = addressStr.split('.').join('');
+              zipcodeStr = "98122";
+
+              var actualPrice = 1300.0;
+              if (actualPrice)
+                checkUpdateLocation(addressStr, cityStr, stateStr, zipcodeStr, actualPrice); // TODO use real locations 
+              else 
+                checkUpdateLocation(addressStr, cityStr, stateStr, zipcodeStr, 1300.0);
+            }
+
+            console.log("triggers! updating with ")
+            if(target.classList.contains("l47")) {
+              var node = target;
+              addressStr = node.innerHTML;
+              addressStr = addressStr.split(' ').join('+');
+              zipcodeStr = "98122";
+
+              console.log("triggers! updating with "+addressStr);
+
+              var actualPrice = 1100.0;
               if (actualPrice)
                 checkUpdateLocation(addressStr, cityStr, stateStr, zipcodeStr, actualPrice); // TODO use real locations 
               else 
