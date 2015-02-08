@@ -7,6 +7,29 @@ var injected = injected || (function(){
   var currentData = "Ruby";
   var personalData = {};
 
+  var zipCodeMap = {};
+  zipCodeMap["98115"] = "N-U";
+  zipCodeMap["98105"] = "N_U";
+  zipCodeMap["98103"] = "N-B";
+  zipCodeMap["98117"] = "N-J";
+  zipCodeMap["98107"] = "N-B";
+  zipCodeMap["98112"] = "E-C";
+  zipCodeMap["98102"] = "E-C";
+  zipCodeMap["98109"] = "W-Q";
+  zipCodeMap["98119"] = "W-Q";
+  zipCodeMap["98199"] = "W-Q";
+  zipCodeMap["98144"] = "S-R";
+  zipCodeMap["98121"] = "W-D";
+  zipCodeMap["98101"] = "W-M";
+  zipCodeMap["98154"] = "W-K";
+  zipCodeMap["98104"] = "W-K";
+  zipCodeMap["98134"] = "S-O";
+  zipCodeMap["98116"] = "SW-W";
+  zipCodeMap["98126"] = "SW-W";
+  zipCodeMap["98106"] = "SW-F";
+  zipCodeMap["98108"] = "SW-O";
+  zipCodeMap["98118"] = "SW-R";
+
 // ==========================================================
 // XML parser 
 
@@ -137,6 +160,21 @@ if (typeof window.DOMParser != "undefined") {
     xmlhttp.send();
   }
 
+  var seattleCrimeApiRequest = function(callback) {
+    var requestStr = "https://data.seattle.gov/resource/3xqu-vnum.json";
+
+    var xmlhttp = new XMLHttpRequest();
+    xmlhttp.open("GET", requestStr, true);
+    xmlhttp.onreadystatechange = function() {
+      if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+          var apiData = JSON.parse(xmlhttp.responseText);
+          //console.log(xmlhttp.responseText);
+          callback(apiData);
+      }
+    }
+    xmlhttp.send();
+  }
+
 // ========================================================== 
 // local API data for current location 
   
@@ -157,6 +195,41 @@ if (typeof window.DOMParser != "undefined") {
 
   var googlePlacesApiDataObject_hospital = null; 
   var googlePlacesApiDataObject_school = null;
+  var googlePlacesApiDataObject_groceries = null;
+
+  var hospitalCount = 0;
+  var schoolCount = 0;
+  var timeToGroceriesSeconds = 0;
+
+  var crimeDataObject = null;
+  var crimeTable = {};
+  var crimeTotal = 0; 
+  var cityAverageCrimeScore = 0.0;
+
+  seattleCrimeApiRequest(function(dataObj) {
+    crimeDataObject = dataObj;
+    console.log(crimeDataObject.length);
+    for (var i = 0; i < crimeDataObject.length; i++) {
+      var mapID = crimeDataObject[i].precinct + "-" + crimeDataObject[i].sector;
+      console.log(mapID);
+      if (!(mapID in crimeTable))
+        crimeTable[mapID] = 0.0;
+      crimeTable[mapID] += parseInt(crimeDataObject[i].stat_value);
+      crimeTotal += parseInt(crimeDataObject[i].stat_value);
+    }
+
+    var highest = 0.0;
+    var lowest = 1.0;
+    for (var mapID in crimeTable) {
+      crimeTable[mapID] /= crimeTotal;
+      if (crimeTable[mapID] > highest)
+        highest = crimeTable[mapID];
+      if (crimeTable[mapID] < lowest)
+        lowest = crimeTable[mapID];
+    }
+
+    cityAverageCrimeScore = (highest + lowest) / 2.0; // hack 
+  });
 
   var checkUpdateLocation = function(newLocationAddress) {
     if (newLocationAddress == currentLocationAddress)
@@ -181,7 +254,7 @@ if (typeof window.DOMParser != "undefined") {
     greatschoolsApiRequest(personalData[currentData].workaddress[0], "Seattle", "WA", function(dataObj){
       greatschoolsDataObject = dataObj;
     });
-*/
+
     googleGeoApiRequest(originAddr, function(dataObj){
       googleGeoApiDataObject = dataObj; 
       currLongitude = googleGeoApiDataObject.results[0].geometry.location.lng;
@@ -195,10 +268,75 @@ if (typeof window.DOMParser != "undefined") {
       googlePlacesApiRequest(currLatitude, currLongitude, "school", function(dataObj){
         googlePlacesApiDataObject_school = dataObj;
       });
-    });
 
-    // make things break, have default parameters (at least 10)
+      googlePlacesApiRequest(currLatitude, currLongitude, "grocery_or_supermarket", function(dataObj){
+        googlePlacesApiDataObject_groceries = dataObj;
+      });
+    });
+*/
+    // TODO make things break, have default parameters (at least 10)
+    zillowRentEstimate = 1500.0;
+    timeToWorkSeconds = 30 * 60.0;
+    schoolCount = 3;
+    hospitalCount = 2;
+    timeToGroceriesSeconds = 15 * 60.0;
+    zipCrimeScore = 0.04;
+
+    // =========================================== 
     // run the algorithms 
+
+    var weights = {};
+
+    weights["affordable"] = [50.0, 75.0]; 
+    weights["work"] = [10.0, 30.0]; 
+    weights["school"] = [5.0, 30.0]; 
+    weights["hospital"] = [5.0, 30.0]; 
+    weights["safety"] = [15.0, 30.0]; 
+    weights["groceries"] = [5.0, 30.0]; 
+
+    for (var weightName in weights) {
+      if(personalData[currentData].priorities.indexOf(weightName) > -1)
+        weights[weightName] = weights[weightName][1];
+      else 
+        weights[weightName] = weights[weightName][0];
+    }
+
+    var scores = {};
+    
+    var rentPercentageRange = [0.33, 1.0]; // in percentage of income  
+    var affordableScore = ((zillowRentEstimate / personalData[currentData].monthlyincome) - rentPercentageRange[0]) / (rentPercentageRange[1] - rentPercentageRange[0]);
+    scores["affordable"] = Math.max(0.0, affordableScore);
+
+    var workTravelTimeRange = [15*60.0, 60*60.0]; // in seconds 
+    var workScore = (timeToWorkSeconds - workTravelTimeRange[0]) / (workTravelTimeRange[1] - workTravelTimeRange[0]);
+    scores["work"] = Math.max(0.0, workScore);
+
+    var schoolCountRange = [1, 5];
+    var schoolScore = (schoolCount - schoolCountRange[0]) / (schoolCountRange[1] - schoolCountRange[0]);
+    scores["school"] = Math.max(0.0, schoolScore);
+
+    var hospitalCountRange = [1, 5];
+    var hospitalScore = (hospitalCount - hospitalCountRange[0]) / (hospitalCountRange[1] - hospitalCountRange[0]);
+    scores["hospital"] = Math.max(0.0, hospitalScore);
+
+    var groceriesTravelTimeRange = [5*60.0, 30*60.0]; // in seconds 
+    var groceriesScore = (timeToGroceriesSeconds - groceriesTravelTimeRange[0]) / (groceriesTravelTimeRange[1] - groceriesTravelTimeRange[0]);
+    scores["groceries"] = Math.max(0.0, groceriesScore);
+
+    var crimePercentageRange = [0.5, 1.5]; // in percentage compared to city average  
+    var safetyScore = ((zipCrimeScore / cityAverageCrimeScore) - crimePercentageRange[0]) / (crimePercentageRange[1] - crimePercentageRange[0]);
+    scores["safety"] = Math.max(0.0, safetyScore);
+
+    console.log(scores);
+    console.log(weights);
+
+    var totalScore = 100.0;
+    for (var weightName in weights) {
+      totalScore -= scores[weightName] * weights[weightName];
+    }
+
+    console.log(totalScore);
+
     // update UI/UX accordingly 
   }
 
@@ -373,16 +511,16 @@ if (typeof window.DOMParser != "undefined") {
   personalData["Ruby"] = {};
   personalData["Ruby"].firstname = "Ruby";
   personalData["Ruby"].profession = "Mom";
-  personalData["Ruby"].priorities = ["School", "Safe", "Work"];
-  personalData["Ruby"].monthlyincome = 2000;
+  personalData["Ruby"].priorities = ["school", "safety", "work"];
+  personalData["Ruby"].monthlyincome = 2000.0;
   personalData["Ruby"].workaddress = ["800 Occidental Avenue South", "Seattle, WA 98134"];
   personalData["Ruby"].photo = "https://s3-us-west-2.amazonaws.com/roominnate.com/imgs/mom.jpg";
 
   personalData["Oliver"] = {};
   personalData["Oliver"].firstname = "Oliver";
   personalData["Oliver"].profession = "Veteran";
-  personalData["Oliver"].priorities = ["Hospital", "Affordable", "Work"];
-  personalData["Oliver"].monthlyincome = 1500;
+  personalData["Oliver"].priorities = ["hospital", "affordable", "work"];
+  personalData["Oliver"].monthlyincome = 1500.0;
   personalData["Oliver"].workaddress = ["400 Broad Street", "Seattle, WA 98109"];
   personalData["Oliver"].photo = "https://s3-us-west-2.amazonaws.com/roominnate.com/imgs/vet.jpg";
 
