@@ -271,6 +271,14 @@ if (typeof window.DOMParser != "undefined") {
     text_div.innerHTML = "<p>...</p>";
     popup_div.style.backgroundColor = "#bbb"; // grey
 
+    info_div1.innerHTML = "<p>...</p>";
+    info_div2.innerHTML = "<p>...</p>";
+    info_div3.innerHTML = "<p>...</p>";
+
+    info_div1.getElementsByTagName("p")[0].style.color = "#bbb";
+    info_div2.getElementsByTagName("p")[0].style.color = "#bbb";
+    info_div3.getElementsByTagName("p")[0].style.color = "#bbb";
+
     // =========================================== 
     // run the algorithms 
 
@@ -325,8 +333,6 @@ if (typeof window.DOMParser != "undefined") {
 
       console.log(scores);
 
-      var scoreThresHolds = [0.4, 0.6, 0.8];
-
       var totalScore = 100.0;
       for (var weightName in weights) {
         totalScore -= scores[weightName] * weights[weightName];
@@ -345,6 +351,50 @@ if (typeof window.DOMParser != "undefined") {
         popup_div.style.backgroundColor = "#2695e3"; // blue 
       else
         popup_div.style.backgroundColor = "#e37426"; // orange
+
+      var scoreThresHolds = [0.4, 0.6, 0.8];
+      var colorTable = ["#18be5d", "#2695e3", "#e32636", "#e32636"];
+
+      var innerHtmlUpdate = ["", "", ""];
+      var innerHtmlValues = [0,0,0];
+      for (var i = 0; i < 3; i++) {
+        var prefName = personalData[currentData].priorities[i];
+
+        var valueIndex = 0;
+        for (var t = scoreThresHolds.length-1; t > 0; t--) {
+          console.log("testing "+prefName+": "+(1.0 - scores[prefName])+" < "+scoreThresHolds[t]+" --> value: "+valueIndex);
+          if (scoreThresHolds[t] > (1.0 - scores[prefName]))
+            valueIndex += 1;
+        }
+
+        innerHtmlValues[i] = valueIndex;
+        innerHtmlUpdate[i] = "<p>"+pref_descs[prefName][valueIndex]+"</p>";
+      }
+
+      if (scores["affordable"] > 0.8 || scores["affordable"] < 0.3) {
+        prefName = "affordable";
+        valueIndex = 0;
+        for (var t = scoreThresHolds.length-1; t > 0; t--) {
+          if (scoreThresHolds[t] > (1.0 - scores[prefName]))
+            valueIndex += 1;
+        }
+
+        innerHtmlValues[2] = innerHtmlValues[1];
+        innerHtmlValues[1] = innerHtmlValues[0];
+        innerHtmlValues[0] = valueIndex;
+
+        innerHtmlUpdate[2] = innerHtmlUpdate[1];
+        innerHtmlUpdate[1] = innerHtmlUpdate[0];
+        innerHtmlUpdate[0] = "<p>"+pref_descs[prefName][valueIndex]+"</p>";
+      }
+
+      info_div1.innerHTML = innerHtmlUpdate[0];
+      info_div2.innerHTML = innerHtmlUpdate[1];
+      info_div3.innerHTML = innerHtmlUpdate[2];
+
+      info_div1.getElementsByTagName("p")[0].style.color = colorTable[innerHtmlValues[0]];
+      info_div2.getElementsByTagName("p")[0].style.color = colorTable[innerHtmlValues[1]];
+      info_div3.getElementsByTagName("p")[0].style.color = colorTable[innerHtmlValues[2]];
     }
 
     // ====================================================== 
@@ -389,6 +439,8 @@ if (typeof window.DOMParser != "undefined") {
     else {
       zillowRentEstimate = rentPrice;
     }
+
+    console.log("zillowRentEstimate: "+rentPrice);
 /*
     numberOfCallsNeeded += 1;
     greatschoolsApiRequest(personalData[currentData].workaddress[0], "Seattle", "WA", function(dataObj){
@@ -496,7 +548,7 @@ if (typeof window.DOMParser != "undefined") {
   text_div = document.createElement("div");
   text_div.className = "info-link-score";
   text_div.id = "info-link-score";
-  text_div.innerHTML = "<p>92</p>";
+  text_div.innerHTML = "<p>...</p>";
   popup_div.appendChild(text_div);
 
   var div_span = document.createElement("span");
@@ -563,7 +615,26 @@ if (typeof window.DOMParser != "undefined") {
                 addressStr = addressStr.split(' ').join('+');
                 zipcodeStr = node.innerHTML.substring(node.innerHTML.indexOf("Seattle, WA")+12, node.innerHTML.indexOf("</span>"));
 
-                checkUpdateLocation(addressStr, cityStr, stateStr, zipcodeStr, 1300.0); // TODO use real locations 
+                var prices = document.querySelectorAll(".main-row.home-summary-row");
+                var actualPrice = null;
+                for (var p = 0; p < prices.length; p++) {
+                  var price = prices[p];
+                  var priceSpan = price.getElementsByTagName("span")[0].data;
+                  
+                  if (priceSpan.innerHTML.indexOf("$") > -1)
+                  {
+                    actualPrice = priceSpan.innerHTML.substring(0, priceSpan.innerHTML.indexOf('<span')); 
+                    actualPrice = actualPrice.replace("$","");
+                    actualPrice = parseInt(actualPrice);
+
+                    console.log(actualPrice);
+                  }
+                }
+
+                if (actualPrice)
+                  checkUpdateLocation(addressStr, cityStr, stateStr, zipcodeStr, actualPrice); // TODO use real locations 
+                else 
+                  checkUpdateLocation(addressStr, cityStr, stateStr, zipcodeStr, 1300.0);
               }
             }
             
@@ -573,7 +644,26 @@ if (typeof window.DOMParser != "undefined") {
               addressStr = addressStr.split(' ').join('+');
               zipcodeStr = node.innerHTML.substring(node.innerHTML.indexOf("Seattle, WA")+12, node.innerHTML.indexOf("</span>"));
 
-              checkUpdateLocation(addressStr, cityStr, stateStr, zipcodeStr, 1300.0); // TODO use real locations 
+              var prices = document.querySelectorAll(".main-row.home-summary-row");
+              var actualPrice = null;
+              for (var p = 0; p < prices.length; p++) {
+                var price = prices[p];
+                var priceSpan = price.getElementsByTagName("span")[0];
+                
+                if (priceSpan.innerHTML.indexOf("$") > -1)
+                {
+                  actualPrice = priceSpan.innerHTML.substring(0, priceSpan.innerHTML.indexOf('<span')); 
+                  actualPrice = actualPrice.replace("$","");
+                  actualPrice = parseInt(actualPrice);
+
+                  console.log(actualPrice);
+                }
+              }
+
+              if (actualPrice)
+                checkUpdateLocation(addressStr, cityStr, stateStr, zipcodeStr, actualPrice); // TODO use real locations 
+              else 
+                checkUpdateLocation(addressStr, cityStr, stateStr, zipcodeStr, 1300.0);
             }
           }
         }
@@ -675,7 +765,7 @@ if (typeof window.DOMParser != "undefined") {
   personalData["Charles"] = {};
   personalData["Charles"].firstname = "Charles";
   personalData["Charles"].profession = "Veteran";
-  personalData["Charles"].priorities = ["hospital", "affordable", "work"];
+  personalData["Charles"].priorities = ["hospital", "safety", "work"];
   personalData["Charles"].monthlyincome = 1500.0;
   personalData["Charles"].workaddress = ["800 Occidental Avenue South", "Seattle, WA 98134"];
   personalData["Charles"].photo = "https://s3-us-west-2.amazonaws.com/roominnate.com/imgs/vet.jpg";
@@ -689,6 +779,20 @@ if (typeof window.DOMParser != "undefined") {
     user_prefs_div2.innerHTML = "<p>"+pref_descs[personalData[currentData].priorities[1]][0]+"</p>";
     user_prefs_div3.innerHTML = "<p>"+pref_descs[personalData[currentData].priorities[2]][0]+"</p>";
     user_work.innerHTML = "<p><u>Work:</u><br>"+personalData[currentData].workaddress[0]+"<br>"+personalData[currentData].workaddress[1]+"</p>";
+
+    // update the popup too 
+    text_div.innerHTML = "<p>...</p>";
+    popup_div.style.backgroundColor = "#bbb"; // grey
+
+    info_div1.innerHTML = "<p>...</p>";
+    info_div2.innerHTML = "<p>...</p>";
+    info_div3.innerHTML = "<p>...</p>";
+
+    info_div1.getElementsByTagName("p")[0].style.color = "#bbb";
+    info_div2.getElementsByTagName("p")[0].style.color = "#bbb";
+    info_div3.getElementsByTagName("p")[0].style.color = "#bbb";
+
+    currentLocationAddress = ""; // reset location 
   }
   updateUserUI();
 

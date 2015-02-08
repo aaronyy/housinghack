@@ -1,7 +1,7 @@
 body > #info-popup {
     height:200px !important;
     width:240px !important;
-    background-color: #2695e3;
+    background-color: #bbb;
 
     pointer-events:none;
 
