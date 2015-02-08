@@ -3,7 +3,10 @@
 // without reloading.
 var injected = injected || (function(){
 
-  // lots of variables 
+  // lots of random variables 
+  var text_div;
+  var popup_div;
+
   var currentData = "Ruby";
   var personalData = {};
 
@@ -29,6 +32,14 @@ var injected = injected || (function(){
   zipCodeMap["98106"] = "SW-F";
   zipCodeMap["98108"] = "SW-O";
   zipCodeMap["98118"] = "SW-R";
+
+  var pref_descs = {};
+  pref_descs["affordable"] = ["very affordable", "affordable", "expensive", "too expensive"];
+  pref_descs["work"] = ["close to work", "good commute", "bad commute", "horrible commute"]; 
+  pref_descs["school"] = ["nearby schools", "okay to schools", "far from schools", "no schools"];
+  pref_descs["hospital"] = ["nearby hospitals", "okay to hospitals", "far from hospitals", "no hospitals"];
+  pref_descs["safety"] = ["very safe area", "moderately safe", "not too safe area", "dangerous area"];
+  pref_descs["groceries"] = ["nearby groceries", "okay groceries", "far groceries", "no groceries"];
 
 // ==========================================================
 // XML parser 
@@ -208,10 +219,8 @@ if (typeof window.DOMParser != "undefined") {
 
   seattleCrimeApiRequest(function(dataObj) {
     crimeDataObject = dataObj;
-    console.log(crimeDataObject.length);
     for (var i = 0; i < crimeDataObject.length; i++) {
       var mapID = crimeDataObject[i].precinct + "-" + crimeDataObject[i].sector;
-      console.log(mapID);
       if (!(mapID in crimeTable))
         crimeTable[mapID] = 0.0;
       crimeTable[mapID] += parseInt(crimeDataObject[i].stat_value);
@@ -231,30 +240,40 @@ if (typeof window.DOMParser != "undefined") {
     cityAverageCrimeScore = (highest + lowest) / 2.0; // hack 
   });
 
-  var checkUpdateLocation = function(newLocationAddress) {
+  // =========================================== 
+    // TODO make things break, have default parameters (at least 10)
+    zillowRentEstimate = 500.0;
+    timeToWorkSeconds = 30 * 60.0;
+    schoolCount = 3;
+    hospitalCount = 2;
+    timeToGroceriesSeconds = 15 * 60.0;
+    zipCrimeScore = 0.04;
+
+// ==================================================================== 
+// all of the API calls ever forever 
+
+  var checkUpdateLocation = function(newLocationAddress, city, state, zipcode) {
     if (newLocationAddress == currentLocationAddress)
       return; 
-    currentLocationAddress = newLocationAddress;
+    currentLocationAddress = newLocationAddress + " "+city+" "+state+" "+zipcode;
 
     var originAddr = personalData[currentData].workaddress[0]+", "+personalData[currentData].workaddress[1];
-/*
+
     googleApiRequest(originAddr, currentLocationAddress, function(dataObj){ 
       googleApiDataObject = dataObj; 
       timeToWork = googleApiDataObject.rows[0].elements[0].duration.text;
       timeToWorkSeconds = googleApiDataObject.rows[0].elements[0].duration.value;
-      longitude = googleApiDataObject.rows[0].elements[0].duration.value;
-      latitude = googleApiDataObject.rows[0].elements[0].duration.value;
-    });
-/*
-    zillowApiRequest(personalData[currentData].workaddress[0], personalData[currentData].workaddress[1], function(dataObj){
-      zillowDataObject = dataObj;
-      rentZestimate = parseInt(zillowDataObject.getElementsByTagName("rentzestimate")[0].getElementsByTagName("amount")[0].innerHTML);
     });
 
+    zillowApiRequest(personalData[currentData].workaddress[0], personalData[currentData].workaddress[1], function(dataObj){
+      zillowDataObject = dataObj;
+      zillowRentEstimate = parseInt(zillowDataObject.getElementsByTagName("rentzestimate")[0].getElementsByTagName("amount")[0].innerHTML);
+    });
+/*
     greatschoolsApiRequest(personalData[currentData].workaddress[0], "Seattle", "WA", function(dataObj){
       greatschoolsDataObject = dataObj;
     });
-
+*/
     googleGeoApiRequest(originAddr, function(dataObj){
       googleGeoApiDataObject = dataObj; 
       currLongitude = googleGeoApiDataObject.results[0].geometry.location.lng;
@@ -263,24 +282,19 @@ if (typeof window.DOMParser != "undefined") {
 
       googlePlacesApiRequest(currLatitude, currLongitude, "hospital", function(dataObj){
         googlePlacesApiDataObject_hospital = dataObj;
+        hospitalCount = googlePlacesApiDataObject_hospital.results.length;
       });
 
       googlePlacesApiRequest(currLatitude, currLongitude, "school", function(dataObj){
         googlePlacesApiDataObject_school = dataObj;
+        schoolCount = googlePlacesApiDataObject_school.results.length;
       });
 
       googlePlacesApiRequest(currLatitude, currLongitude, "grocery_or_supermarket", function(dataObj){
         googlePlacesApiDataObject_groceries = dataObj;
+        groceriesCount = googlePlacesApiDataObject_groceries.results.length;
       });
     });
-*/
-    // TODO make things break, have default parameters (at least 10)
-    zillowRentEstimate = 1500.0;
-    timeToWorkSeconds = 30 * 60.0;
-    schoolCount = 3;
-    hospitalCount = 2;
-    timeToGroceriesSeconds = 15 * 60.0;
-    zipCrimeScore = 0.04;
 
     // =========================================== 
     // run the algorithms 
@@ -337,7 +351,16 @@ if (typeof window.DOMParser != "undefined") {
 
     console.log(totalScore);
 
+    // =========================================== 
     // update UI/UX accordingly 
+
+    text_div.innerHTML = "<p>"+Math.ceil(totalScore)+"</p>";
+    if (totalScore > 80) 
+      popup_div.style.backgroundColor = "#18be5d"; // green 
+    else if (totalScore > 60) 
+      popup_div.style.backgroundColor = "#2695e3"; // blue 
+    else
+      popup_div.style.backgroundColor = "#e37426"; // orange
   }
 
 // ========================================================== 
@@ -354,37 +377,73 @@ if (typeof window.DOMParser != "undefined") {
   fulldetails_div.appendChild(fulldetails_img);
 
   var user_fullname = document.createElement("div");
-  user_fullname.innerHTML = "<br><br><br><br><br><br><br><p>Susie</p>";
+  user_fullname.className = "info-fulldetails-popup-title";
+  user_fullname.id = "info-fulldetails-popup-title";
+  user_fullname.innerHTML = "<p>Ruby</p>";
   fulldetails_div.appendChild(user_fullname);
 
   var user_prefs = document.createElement("div");
-  user_prefs.innerHTML = "<br><p><u>Preferences:</u><br>Schools<br>Work<br>Safe</p>";
+  user_prefs.className = "info-fulldetails-popup-labels";
+  user_prefs.innerHTML = "<p><u>Preferences:</u></p>";
+  user_prefs.style.top = "270px";
   fulldetails_div.appendChild(user_prefs);
 
+  var div_span = document.createElement("span");
+  fulldetails_div.appendChild(div_span);
+
+  var user_prefs_div1 = document.createElement("div");
+  user_prefs_div1.className = "info-link-description";
+  user_prefs_div1.innerHTML = "<p>great school</p>";
+  fulldetails_div.appendChild(user_prefs_div1);
+
+  var user_prefs_div2 = document.createElement("div");
+  user_prefs_div2.className = "info-link-description";
+  user_prefs_div2.innerHTML = "<p>great school</p>";
+  fulldetails_div.appendChild(user_prefs_div2);
+
+  var user_prefs_div3 = document.createElement("div");
+  user_prefs_div3.className = "info-link-description";
+  user_prefs_div3.innerHTML = "<p>great school</p>";
+  fulldetails_div.appendChild(user_prefs_div3);
+
   var user_work = document.createElement("div");
-  user_work.innerHTML = "<br><p><u>Work:</u><br>800 Occidental Avenue South<br>Seattle, WA 98134</p>";
+  user_work.className = "info-fulldetails-popup-labels";
+  user_work.innerHTML = "<p><u>Work Location:</u><br>800 Occidental Avenue South<br>Seattle, WA 98134</p>";
+  user_work.style.top = "430px";
   fulldetails_div.appendChild(user_work);
 
 // ==========================================
 // popups left 
 
   // create popup, this only happens once 
-  var popup_div = document.createElement("div");
+  popup_div = document.createElement("div");
   popup_div.className = "info-popup";
   popup_div.id = "info-popup";
   document.body.appendChild(popup_div);
   console.log("loaded");
 
-  var text_div = document.createElement("div");
+  text_div = document.createElement("div");
   text_div.className = "info-link-score";
   text_div.id = "info-link-score";
   text_div.innerHTML = "<p>92</p>";
   popup_div.appendChild(text_div);
 
+  var div_span = document.createElement("span");
+  popup_div.appendChild(div_span);
+
   var info_div = document.createElement("div");
   info_div.className = "info-link-description";
-  info_div.id = "info-link-description";
-  info_div.innerHTML = "<p>+Great Schools<br>+Good Work<br>+Great Safety</p>";
+  info_div.innerHTML = "<p>great school</p>";
+  popup_div.appendChild(info_div);
+
+  var info_div = document.createElement("div");
+  info_div.className = "info-link-description";
+  info_div.innerHTML = "<p>okay commute</p>";
+  popup_div.appendChild(info_div);
+
+  var info_div = document.createElement("div");
+  info_div.className = "info-link-description";
+  info_div.innerHTML = "<p>too expensive</p>";
   popup_div.appendChild(info_div);
 
   var photo_div = document.createElement("div");
@@ -403,7 +462,8 @@ if (typeof window.DOMParser != "undefined") {
 // main add listener logic 
 
   function OnSubtreeModified() {
-    var nodes = document.querySelectorAll(".zsg-content-header.addr, .mapAndAttrs > .mapbox"); 
+    var nodes = document.querySelectorAll(".zsg-content-header.addr, .mapAndAttrs > .mapbox, .slick-cell.l47.r47"); 
+    console.log("OnSubtreeModified, nodes selected: "+nodes.length);
     for (var i = 0; i < nodes.length; i++) {
       var node = nodes[i];
 
@@ -418,7 +478,21 @@ if (typeof window.DOMParser != "undefined") {
           if(!popupDiv.classList.contains("show")) {
             popupDiv.classList.add("show");
 
-            checkUpdateLocation("Seattle, WA");
+            var addressStr = "Seattle, WA";
+            var cityStr = "Seattle";
+            var stateStr = "WA";
+            var zipcodeStr = "98000";
+            if(target.classList.contains("zsg-content-header")) {
+              nodes = target.getElementsByTagName("h1");
+              for (var i = 0; i < nodes.length; i++) {
+                var node = nodes[i];
+                addressStr = node.innerHTML.substring(0, node.innerHTML.indexOf(','));
+                zipcodeStr = node.innerHTML.substring(node.innerHTML.indexOf("Seattle, WA")+12, node.innerHTML.indexOf("</span>"));
+
+                checkUpdateLocation(addressStr, cityStr, stateStr, zipcodeStr); // TODO use real locations 
+              }
+            }
+            
           }
         }
 
@@ -451,7 +525,7 @@ if (typeof window.DOMParser != "undefined") {
 // ==========================================
 // objects that get changed 
 
-  var mainContainer = document.querySelectorAll(".property-data-column");
+  var mainContainer = document.querySelectorAll(".property-data-column, .grid-canvas");
   for (var i = 0; i < mainContainer.length; i++) {
     var container = mainContainer[i];
     container.addEventListener("DOMSubtreeModified", OnSubtreeModified, false);
@@ -513,23 +587,32 @@ if (typeof window.DOMParser != "undefined") {
   personalData["Ruby"].profession = "Mom";
   personalData["Ruby"].priorities = ["school", "safety", "work"];
   personalData["Ruby"].monthlyincome = 2000.0;
-  personalData["Ruby"].workaddress = ["800 Occidental Avenue South", "Seattle, WA 98134"];
+  personalData["Ruby"].workaddress = ["400 Broad Street", "Seattle, WA 98109"];
   personalData["Ruby"].photo = "https://s3-us-west-2.amazonaws.com/roominnate.com/imgs/mom.jpg";
 
-  personalData["Oliver"] = {};
-  personalData["Oliver"].firstname = "Oliver";
-  personalData["Oliver"].profession = "Veteran";
-  personalData["Oliver"].priorities = ["hospital", "affordable", "work"];
-  personalData["Oliver"].monthlyincome = 1500.0;
-  personalData["Oliver"].workaddress = ["400 Broad Street", "Seattle, WA 98109"];
-  personalData["Oliver"].photo = "https://s3-us-west-2.amazonaws.com/roominnate.com/imgs/vet.jpg";
+  personalData["Charles"] = {};
+  personalData["Charles"].firstname = "Charles";
+  personalData["Charles"].profession = "Veteran";
+  personalData["Charles"].priorities = ["hospital", "affordable", "work"];
+  personalData["Charles"].monthlyincome = 1500.0;
+  personalData["Charles"].workaddress = ["800 Occidental Avenue South", "Seattle, WA 98134"];
+  personalData["Charles"].photo = "https://s3-us-west-2.amazonaws.com/roominnate.com/imgs/vet.jpg";
 
-  fulldetails_img.src = personalData[currentData].photo;
-  photo_div_img.src = personalData[currentData].photo;
+  var updateUserUI = function() {
+    fulldetails_img.src = personalData[currentData].photo;
+    photo_div_img.src = personalData[currentData].photo;
+
+    user_fullname.innerHTML = "<p>"+personalData[currentData].firstname+"</p>";
+    user_prefs_div1.innerHTML = "<p>"+pref_descs[personalData[currentData].priorities[0]][0]+"</p>";
+    user_prefs_div2.innerHTML = "<p>"+pref_descs[personalData[currentData].priorities[1]][0]+"</p>";
+    user_prefs_div3.innerHTML = "<p>"+pref_descs[personalData[currentData].priorities[2]][0]+"</p>";
+    user_work.innerHTML = "<p><u>Work:</u><br>"+personalData[currentData].workaddress[0]+"<br>"+personalData[currentData].workaddress[1]+"</p>";
+  }
+  updateUserUI();
 
 // ==========================================
 // keyboard operations 
-
+  
   window.onkeydown = function(e) {
     if (e.keyCode == 77)
     {
@@ -541,23 +624,14 @@ if (typeof window.DOMParser != "undefined") {
       }
     }
 
-    if (e.keyCode == 78)
+    if (e.keyCode == 75)
     {
       if(currentData == "Ruby")
-        currentData = "Oliver";
+        currentData = "Charles";
       else 
         currentData = "Ruby";
 
-      fulldetails_img.src = personalData[currentData].photo;
-      photo_div_img.src = personalData[currentData].photo;
-
-      var prefstring = "<br><p><u>Preferences:</u>";
-      for (var i = 0; i < personalData[currentData].priorities.length; i++) {
-        prefstring += "<br>"+personalData[currentData].priorities[i];
-      }
-      prefstring += "</p>";
-      user_prefs.innerHTML = prefstring;
-      user_work.innerHTML = "<br><p><u>Work:</u><br>"+personalData[currentData].workaddress[0]+"<br>"+personalData[currentData].workaddress[1]+"</p>";
+      updateUserUI();
     }
   }
 
