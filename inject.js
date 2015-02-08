@@ -783,7 +783,7 @@ if (typeof window.DOMParser != "undefined") {
 // hardcoded sample data 
 
   personalData["Ruby"] = {};
-  personalData["Ruby"].firstname = "Ruby";
+  personalData["Ruby"].firstname = "Sarah";
   personalData["Ruby"].profession = "Mom";
   personalData["Ruby"].priorities = ["school", "safety", "work"];
   personalData["Ruby"].monthlyincome = 2000.0;
@@ -793,10 +793,10 @@ if (typeof window.DOMParser != "undefined") {
   personalData["Charles"] = {};
   personalData["Charles"].firstname = "Charles";
   personalData["Charles"].profession = "Veteran";
-  personalData["Charles"].priorities = ["hospital", "safety", "work"];
+  personalData["Charles"].priorities = ["hospital", "groceries", "safety"];
   personalData["Charles"].monthlyincome = 1500.0;
   personalData["Charles"].workaddress = ["800 Occidental Avenue South", "Seattle, WA 98134"];
-  personalData["Charles"].photo = "https://s3-us-west-2.amazonaws.com/roominnate.com/imgs/vet.jpg";
+  personalData["Charles"].photo = "https://s3-us-west-2.amazonaws.com/roominnate.com/imgs/grandpa.jpg";
 
   var updateUserUI = function() {
     fulldetails_img.src = personalData[currentData].photo;
