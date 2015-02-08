@@ -29,7 +29,8 @@ if (typeof window.DOMParser != "undefined") {
 }
 
 // ========================================================== 
-// Google API 
+// API requests 
+
   var google_api_key = "AIzaSyASQejib-5K5L6tzpiwNZSuntotZOCkWus";
   var zillow_api_key = "X1-ZWz1az0cc5ybrf_8jmj2";
   var greatschools_api_key = "ubxujm3l2auftgaeysnblgxx";
@@ -73,8 +74,7 @@ if (typeof window.DOMParser != "undefined") {
     xmlhttp.send();
   }
 
-  // http://api.greatschools.org/schools/nearby?key=[yourAPIKey]&address=160+Spear+St&city=San+Francisco&state=CA&zip=94105&schoolType=public-charter&levelCode=elementary-schools&minimumSchools=50&radius=10&limit=100
-  var greatschoolsApiRequest = function(streetAddr, city, state) {
+  var greatschoolsApiRequest = function(streetAddr, city, state, callback) {
     var xmlhttp = new XMLHttpRequest();
 
     var requestStr = "http://api.greatschools.org/schools/nearby?";
@@ -106,6 +106,8 @@ if (typeof window.DOMParser != "undefined") {
   var zillowDataObject = null; 
   var zillowRentEstimate = 0;
 
+  var greatschoolsDataObject = null; 
+
   var checkUpdateLocation = function(newLocationAddress) {
     if (newLocationAddress == currentLocationAddress)
       return; 
@@ -122,7 +124,12 @@ if (typeof window.DOMParser != "undefined") {
       zillowDataObject = dataObj;
       rentZestimate = parseInt(zillowDataObject.getElementsByTagName("rentzestimate")[0].getElementsByTagName("amount")[0].innerHTML);
     });
+
+    greatschoolsApiRequest(personalData[currentData].workaddress[0], "Seattle", "WA", function(dataObj){
+      greatschoolsDataObject = dataObj;
+    });
 */
+
     // update UI/UX accordingly 
   }
 
@@ -185,6 +192,9 @@ if (typeof window.DOMParser != "undefined") {
 
   var justAdded = true; 
 
+// ==========================================
+// main add listener logic 
+
   function OnSubtreeModified() {
     var nodes = document.querySelectorAll(".zsg-content-header.addr, .mapAndAttrs > .mapbox"); 
     for (var i = 0; i < nodes.length; i++) {
@@ -231,11 +241,17 @@ if (typeof window.DOMParser != "undefined") {
     }
   }
 
+// ==========================================
+// objects that get changed 
+
   var mainContainer = document.querySelectorAll(".property-data-column");
   for (var i = 0; i < mainContainer.length; i++) {
     var container = mainContainer[i];
     container.addEventListener("DOMSubtreeModified", OnSubtreeModified, false);
   }
+
+// ==========================================
+// random plugin stuff 
 
   // An object that will contain the "methods"
   // we can use from our event script.
@@ -281,6 +297,10 @@ if (typeof window.DOMParser != "undefined") {
     return true;
   });
 
+
+// ==========================================
+// hardcoded sample data 
+
   personalData["Ruby"] = {};
   personalData["Ruby"].firstname = "Ruby";
   personalData["Ruby"].profession = "Mom";
@@ -299,6 +319,9 @@ if (typeof window.DOMParser != "undefined") {
 
   fulldetails_img.src = personalData[currentData].photo;
   photo_div_img.src = personalData[currentData].photo;
+
+// ==========================================
+// keyboard operations 
 
   window.onkeydown = function(e) {
     if (e.keyCode == 77)
