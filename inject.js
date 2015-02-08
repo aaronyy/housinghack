@@ -619,15 +619,14 @@ if (typeof window.DOMParser != "undefined") {
                 var actualPrice = null;
                 for (var p = 0; p < prices.length; p++) {
                   var price = prices[p];
-                  var priceSpan = price.getElementsByTagName("span")[0].data;
+                  var priceSpan = price.getElementsByTagName("span")[0];
                   
                   if (priceSpan.innerHTML.indexOf("$") > -1)
                   {
                     actualPrice = priceSpan.innerHTML.substring(0, priceSpan.innerHTML.indexOf('<span')); 
                     actualPrice = actualPrice.replace("$","");
-                    actualPrice = parseInt(actualPrice);
-
-                    console.log(actualPrice);
+                    actualPrice = actualPrice.replace(",","");
+                    actualPrice = parseInt(actualPrice, 10);
                   }
                 }
 
@@ -654,9 +653,8 @@ if (typeof window.DOMParser != "undefined") {
                 {
                   actualPrice = priceSpan.innerHTML.substring(0, priceSpan.innerHTML.indexOf('<span')); 
                   actualPrice = actualPrice.replace("$","");
-                  actualPrice = parseInt(actualPrice);
-
-                  console.log(actualPrice);
+                  actualPrice = actualPrice.replace(",","");
+                  actualPrice = parseInt(actualPrice, 10);
                 }
               }
 
