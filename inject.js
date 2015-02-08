@@ -30,8 +30,8 @@ if (typeof window.DOMParser != "undefined") {
 
 // ========================================================== 
 // API requests 
-
-  var google_api_key = "AIzaSyASQejib-5K5L6tzpiwNZSuntotZOCkWus";
+  
+  var google_api_key = "AIzaSyAoysksNa9gcxgFXLS0Y1DPOY-i3e1tvaU";
   var zillow_api_key = "X1-ZWz1az0cc5ybrf_8jmj2";
   var greatschools_api_key = "ubxujm3l2auftgaeysnblgxx";
 
@@ -49,6 +49,48 @@ if (typeof window.DOMParser != "undefined") {
       if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
           var apiData = JSON.parse(xmlhttp.responseText);
           //console.log(xmlhttp.responseText);
+          callback(apiData);
+      }
+    }
+    xmlhttp.send();
+  }
+
+  // https://maps.googleapis.com/maps/api/geocode/json?address= &key 
+  var googleGeoApiRequest = function(origin, callback) {
+    var xmlhttp = new XMLHttpRequest();
+
+    var requestStr = "https://maps.googleapis.com/maps/api/geocode/json?";
+    requestStr += "address="+origin;
+    requestStr += "&key="+google_api_key;
+
+    xmlhttp.open("GET", requestStr, true);
+    xmlhttp.onreadystatechange = function() {
+      if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+          var apiData = JSON.parse(xmlhttp.responseText);
+          //console.log(xmlhttp.responseText);
+          callback(apiData);
+      }
+    }
+    xmlhttp.send();
+  }
+
+  // https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=-33.8670522,151.1957362&radius;=500&types;=food&name;=cruise&key;=AddYourOwnKeyHere
+  var googlePlacesApiRequest = function(lat, lng, types, callback) {
+    var xmlhttp = new XMLHttpRequest();
+
+    var requestStr = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?";
+    requestStr += "location="+lat+","+lng;
+    requestStr += "&radius=4000";
+    requestStr += "&types="+types;
+    requestStr += "&key="+google_api_key;
+
+    console.log(requestStr);
+
+    xmlhttp.open("GET", requestStr, true);
+    xmlhttp.onreadystatechange = function() {
+      if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+          var apiData = JSON.parse(xmlhttp.responseText);
+          console.log(xmlhttp.responseText);
           callback(apiData);
       }
     }
@@ -94,6 +136,7 @@ if (typeof window.DOMParser != "undefined") {
     }
     xmlhttp.send();
   }
+
 // ========================================================== 
 // local API data for current location 
   
@@ -108,18 +151,28 @@ if (typeof window.DOMParser != "undefined") {
 
   var greatschoolsDataObject = null; 
 
+  var googleGeoApiDataObject = null; 
+  var currLongitude = 0;
+  var currLatitude = 0;
+
+  var googlePlacesApiDataObject_hospital = null; 
+  var googlePlacesApiDataObject_school = null;
+
   var checkUpdateLocation = function(newLocationAddress) {
     if (newLocationAddress == currentLocationAddress)
       return; 
     currentLocationAddress = newLocationAddress;
-/*
+
     var originAddr = personalData[currentData].workaddress[0]+", "+personalData[currentData].workaddress[1];
+/*
     googleApiRequest(originAddr, currentLocationAddress, function(dataObj){ 
       googleApiDataObject = dataObj; 
       timeToWork = googleApiDataObject.rows[0].elements[0].duration.text;
       timeToWorkSeconds = googleApiDataObject.rows[0].elements[0].duration.value;
+      longitude = googleApiDataObject.rows[0].elements[0].duration.value;
+      latitude = googleApiDataObject.rows[0].elements[0].duration.value;
     });
-
+/*
     zillowApiRequest(personalData[currentData].workaddress[0], personalData[currentData].workaddress[1], function(dataObj){
       zillowDataObject = dataObj;
       rentZestimate = parseInt(zillowDataObject.getElementsByTagName("rentzestimate")[0].getElementsByTagName("amount")[0].innerHTML);
@@ -129,7 +182,23 @@ if (typeof window.DOMParser != "undefined") {
       greatschoolsDataObject = dataObj;
     });
 */
+    googleGeoApiRequest(originAddr, function(dataObj){
+      googleGeoApiDataObject = dataObj; 
+      currLongitude = googleGeoApiDataObject.results[0].geometry.location.lng;
+      currLatitude = googleGeoApiDataObject.results[0].geometry.location.lat;
+      console.log("lng: "+currLongitude+", lat: "+currLatitude);
 
+      googlePlacesApiRequest(currLatitude, currLongitude, "hospital", function(dataObj){
+        googlePlacesApiDataObject_hospital = dataObj;
+      });
+
+      googlePlacesApiRequest(currLatitude, currLongitude, "school", function(dataObj){
+        googlePlacesApiDataObject_school = dataObj;
+      });
+    });
+
+    // make things break, have default parameters (at least 10)
+    // run the algorithms 
     // update UI/UX accordingly 
   }
 
