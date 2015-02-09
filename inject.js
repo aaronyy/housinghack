@@ -69,9 +69,9 @@ if (typeof window.DOMParser != "undefined") {
 // ========================================================== 
 // API requests 
   
-  var google_api_key = "AIzaSyAoysksNa9gcxgFXLS0Y1DPOY-i3e1tvaU";
-  var zillow_api_key = "X1-ZWz1az0cc5ybrf_8jmj2";
-  var greatschools_api_key = "ubxujm3l2auftgaeysnblgxx";
+  var google_api_key = "put yours here! you can request a free one";
+  var zillow_api_key = "put yours here! you can request a free one";
+  var greatschools_api_key = "put yours here! you can request a free one";
 
   var googleApiRequest = function(origin, dist, callback) {
     var xmlhttp = new XMLHttpRequest();
@@ -786,7 +786,7 @@ if (typeof window.DOMParser != "undefined") {
   personalData["Ruby"].firstname = "Sarah";
   personalData["Ruby"].profession = "Mom";
   personalData["Ruby"].priorities = ["school", "safety", "work"];
-  personalData["Ruby"].monthlyincome = 2000.0;
+  personalData["Ruby"].monthlyincome = 1800.0;
   personalData["Ruby"].workaddress = ["400 Broad Street", "Seattle, WA 98109"];
   personalData["Ruby"].photo = "https://s3-us-west-2.amazonaws.com/roominnate.com/imgs/mom.jpg";
 
@@ -794,7 +794,7 @@ if (typeof window.DOMParser != "undefined") {
   personalData["Charles"].firstname = "Charles";
   personalData["Charles"].profession = "Veteran";
   personalData["Charles"].priorities = ["hospital", "groceries", "safety"];
-  personalData["Charles"].monthlyincome = 1500.0;
+  personalData["Charles"].monthlyincome = 2300.0;
   personalData["Charles"].workaddress = ["800 Occidental Avenue South", "Seattle, WA 98134"];
   personalData["Charles"].photo = "https://s3-us-west-2.amazonaws.com/roominnate.com/imgs/grandpa.jpg";
 
